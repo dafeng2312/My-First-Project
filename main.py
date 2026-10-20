@@ -1,7 +1,7 @@
 import sys
 from database.connection import init_db, get_db_session
 from core.providers.crypto_provider import CryptoProvider
-from core.transformers import DataTransformer
+from core.transformers.data_transformer import DataTransformer
 from core.data_saver import DataSaver
 
 def run_pipeline():
