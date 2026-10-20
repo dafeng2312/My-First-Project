@@ -1,0 +1,16 @@
+# Python environment and caches
+__pycache__/
+*.pyc
+.venv/
+env/
+
+# Databases & local storage
+*.db
+*.sqlite3
+.env
+logs/
+*.log
+
+# IDE configurations
+.vscode/
+.idea/
