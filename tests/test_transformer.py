@@ -34,4 +34,4 @@ def test_transformer_skips_invalid_prices():
     }
 
     result = transformer.transform(mock_corrupted_data)
-    assert len(result) == 0  
+    assert len(result) == 0  # Forzar ejecucion limpia
