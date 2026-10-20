@@ -1,43 +1,58 @@
 import sys
+import argparse
 from database.connection import init_db, get_db_session
 from core.providers.crypto_provider import CryptoProvider
 from core.transformers.data_transformer import DataTransformer
 from core.data_saver import DataSaver
 
-def run_pipeline():
-    print("====================================")
-    print("🚀 Starting DataForge CLI Pipeline...")
-    print("====================================")
-
-    # 1. Initialize the database schema (Creates dataforge.db if it doesn't exist)
+def run_pipeline(debug: bool):
+    if debug:
+        print("[DEBUG] Modo detallado activo. Inicializando componentes...")
+    
+    if debug:
+        print("[DEBUG] Inicializando base de datos local SQLite (dataforge.db)...")
     init_db()
 
-    # 2. Instantiate our decoupled engine components (SOLID Principles)
     provider = CryptoProvider()
     transformer = DataTransformer()
     session = get_db_session()
     saver = DataSaver(session)
 
     try:
-        # Execute Extraction (Fetcher)
-        print("[1/3] Fetching data from external API...")
+        if debug:
+            print("[DEBUG] Paso 1: Conectando con CoinGecko API...")
         raw_payload = provider.fetch_raw_data()
 
-        # Execute Transformation (Cleaner)
-        print("[2/3] Cleaning and calculating business metrics...")
+        if debug:
+            print(f"[DEBUG] Paso 2: Transformando carga de datos raw (Tamaño de llaves: {len(raw_payload)})")
         clean_records = transformer.transform(raw_payload)
 
-        # Execute Load (Saver)
-        print("[3/3] Committing records to storage layer...")
+        if debug:
+            print(f"[DEBUG] Paso 3: Volcando {len(clean_records)} registros validados al ORM...")
         saver.save_records(clean_records)
 
-        print("\n✅ Execution Finished Successfully!")
+        print("🚀 [SUCCESS] ¡Proceso ETL ejecutado correctamente a través de la CLI!")
     except Exception as e:
-        print(f"\n❌ Pipeline failed during execution: {e}")
+        print(f"❌ [CRITICAL] Error fatal en la ejecución del pipeline: {e}", file=sys.stderr)
         sys.exit(1)
     finally:
-        # Clean up by shutting down the session connection
+        if debug:
+            print("[DEBUG] Cerrando sesión limpia de la base de datos.")
         session.close()
 
 if __name__ == "__main__":
-    run_pipeline()
+    # Configuración de comandos nativos de Linux con argparse
+    parser = argparse.ArgumentParser(
+        description="DataForge CLI - Motor ETL industrializado de datos Financieros Cripto."
+    )
+    
+    # Añadimos la bandera opcional --debug para flujos detallados
+    parser.add_argument(
+        "--debug", 
+        action="store_true", 
+        help="Muestra trazas detalladas del estado interno durante la ejecución del proceso."
+    )
+
+    args = parser.parse_args()
+    run_pipeline(debug=args.debug)
+
