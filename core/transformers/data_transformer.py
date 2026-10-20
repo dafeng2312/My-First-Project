@@ -1,38 +1,69 @@
+"""Data Transformation Subsystem.
+
+Houses the concrete pure business logic layers responsible for structural ingestion validation,
+corrupted metric filtering, and computed operational metric injection.
+"""
+
+import logging
 from datetime import datetime, timezone
+from typing import Dict, List, Any
+
+# Configure institutional level isolation logs for metrics evaluation
+logger = logging.getLogger("dataforge.transformer")
+
 
 class DataTransformer:
+    """Engine responsible EXCLUSIVELY for validating raw JSON payloads and computing business metrics.
+    
+    This manifests a completely pure code state layer, ensuring high testability 
+    profiles across isolated automated mock Unit Testing pipelines.
     """
-    Engine responsible ONLY for validating and computing metrics.
-    This is a pure data transformation layer, making it trivial to Unit Test.
-    """
-    def transform(self, raw_data: dict) -> list[dict]:
-        """
-        Validates inputs and injects business metrics like Market Tier.
+    
+    # Business logic constant thresholds defining infrastructure tiers
+    VOLUME_TIER_THRESHOLD_USD: float = 1_000_000_000.0
+
+    def transform(self, raw_data: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """Validates network payloads structural safety and injects computed business indicators.
+
+        Args:
+            raw_data: Unfiltered raw dictionary structure retrieved from source API endpoints.
+
+        Returns:
+            A clean list containing structurally safe dictionaries mapped exactly to database models.
+
+        Raises:
+            ValueError: If the raw data input parameter payload evaluates as empty or None.
         """
         if not raw_data:
-            raise ValueError("Cannot transform empty payload.")
+            raise ValueError("Pipeline transformation collapsed: Cannot transform an empty or null payload.")
 
-        processed_records = []
-        current_time = datetime.now(timezone.utc)
+        processed_records: List[Dict[str, Any]] = []
+        
+        # Enforce timezone-aware execution marks to preserve operational historical tracing accuracy
+        current_time: datetime = datetime.now(timezone.utc)
 
         for asset_name, metrics in raw_data.items():
-            price = metrics.get("usd", 0.0)
-            volume = metrics.get("usd_24h_vol", 0.0)
+            # Gracefully handle missing keys using standard float fallbacks
+            price: float = float(metrics.get("usd", 0.0))
+            volume: float = float(metrics.get("usd_24h_vol", 0.0))
 
-            # Data integrity check (Filter out corrupted API data safely)
+            # Data Integrity Check: Filter out corrupted or zeroed market exceptions safely
             if price <= 0.0:
-                print(f"[WARN] Skipping {asset_name} due to invalid price data.")
+                logger.warning(
+                    f"Skipping asset metrics packet for '{asset_name}': Price index evaluates as an invalid data state."
+                )
                 continue
 
-            # Business Logic rule: Define market tier based on 24h volume boundary
-            # 1 Billion USD as threshold
-            market_tier = "High Volume" if volume > 1_000_000_000 else "Standard"
+            # Core Business Rule Automation: Deduce market tier segmentation based on volume boundary
+            market_tier: str = (
+                "High Volume" if volume > self.VOLUME_TIER_THRESHOLD_USD else "Standard"
+            )
 
-            # Map the data payload to match our database columns perfectly
-            record = {
+            # Map the clean operational state payload directly to match relational table parameters
+            record: Dict[str, Any] = {
                 "asset_name": asset_name,
-                "current_price": float(price),
-                "daily_volume": float(volume),
+                "current_price": price,
+                "daily_volume": volume,
                 "market_tier": market_tier,
                 "timestamp": current_time
             }
