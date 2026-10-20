@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
 class DataTransformer:
     """
@@ -13,7 +13,7 @@ class DataTransformer:
             raise ValueError("Cannot transform empty payload.")
 
         processed_records = []
-        current_time = datetime.utcnow()
+        current_time = datetime.now(timezone.utc)
 
         for asset_name, metrics in raw_data.items():
             price = metrics.get("usd", 0.0)
