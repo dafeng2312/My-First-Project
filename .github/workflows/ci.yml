@@ -1,0 +1,30 @@
+name: Python Data Pipeline CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: 1. Descargar el repositorio de GitHub
+      uses: actions/checkout@v4
+
+    - name: 2. Configurar entorno oficial de Python 3.11
+      uses: actions/setup-python@v5
+      with:
+        python-with-version: '3.11'
+
+    - name: 3. Ejecutar script de automatización setup.sh de Linux
+      run: |
+        chmod +x scripts/setup.sh
+        ./scripts/setup.sh
+
+    - name: 4. Ejecutar pruebas unitarias automatizadas con PyTest
+      run: |
+        source .venv/bin/activate
+        pytest tests/
