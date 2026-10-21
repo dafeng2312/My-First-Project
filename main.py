@@ -2,12 +2,14 @@
 
 This module acts as the orchestration layer and main entry point for the Linux CLI.
 It leverages functional decoupling to pipeline live cryptocurrency metrics from public APIs, 
-apply business logic schemas, and persist structured objects via an ORM session layer.
+apply business logic schemas, and persist structured objects via an Excel Spreadsheet.
 """
 
 import sys
 import argparse
 from typing import Final
+# 1. IMPORTAMOS PANDAS PARA GESTIONAR EL EXCEL
+import pandas as pd
 
 # Core architecture subsystems imports
 from database.connection import init_db, get_db_session
@@ -33,9 +35,9 @@ def run_pipeline(debug: bool) -> None:
     """
     if debug:
         print(f"{DEBUG_MARK} Verbose trace mode initialized. Assembling core components...")
-        print(f"{DEBUG_MARK} Provisioning local SQLite persistence architecture...")
     
-    # Initialize connection structures and assert database schema presence
+    # [NOTAS] Dejamos inicializar la DB por seguridad si otros módulos dependen de ella,
+    # pero el guardado real ahora irá al archivo Excel.
     init_db()
 
     # Instantiate decoupled boundary components applying SOLID dependencies mapping
@@ -55,12 +57,40 @@ def run_pipeline(debug: bool) -> None:
             print(f"{DEBUG_MARK} Stage 2: Parsing payload schemas. Structural dictionary key count: {len(raw_payload)}")
         clean_records = transformer.transform(raw_payload)
 
-        # Phase 3: Data Load Layer (ORM relational persistence)
+        # =========================================================================
+        # NUEVA FASE 3: Guardar directamente a un archivo de Excel (.xlsx)
+        # =========================================================================
+                # =========================================================================
+        # NUEVA FASE 3: Guardar directamente a un archivo de Excel (.xlsx)
+        # =========================================================================
         if debug:
-            print(f"{DEBUG_MARK} Stage 3: Committing {len(clean_records)} schema-validated entities to the ORM scope...")
+            print(f"{DEBUG_MARK} Stage 3: Intercepting records and generating Excel spreadsheet...")
+        
+        # 2. CONVERTIMOS LOS REGISTROS LIMPIOS EN UN DATAFRAME DE PANDAS
+        df = pd.DataFrame(clean_records)
+        
+        # --- SOLUCIÓN AL ERROR DE ZONA HORARIA ---
+        # Recorremos cada columna buscando tipos de datos de fecha (datetime)
+        for col in df.columns:
+            if pd.api.types.is_datetime64_any_dtype(df[col]):
+                if debug:
+                    print(f"{DEBUG_MARK} Stripping timezone from column: {col}")
+                # Removemos la zona horaria convirtiéndola a "local/unaware"
+                df[col] = df[col].dt.tz_localize(None)
+        # -----------------------------------------
+        
+        # 3. EXPORTAMOS A EXCEL
+        output_excel_path = "crypto_market_data.xlsx"
+        df.to_excel(output_excel_path, index=False)
+        
+        if debug:
+            print(f"{DEBUG_MARK} Excel document created successfully at: {output_excel_path}")
+        
+        # Copia de respaldo en la .db (opcional)
         saver.save_records(clean_records)
+        # =========================================================================
 
-        print(f"{SUCCESS_MARK} ETL execution completed seamlessly through the Linux CLI environment.")
+        print(f"{SUCCESS_MARK} ETL execution completed seamlessly. Data exported to Excel.")
         
     except Exception as error:
         # Standard error emission utilizing standard error streams for diagnostic compliance

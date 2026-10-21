@@ -1,8 +1,8 @@
 # DataForge CLI: Production-Ready Crypto ETL Pipeline
 
-An enterprise-grade, decoupled **Extract, Transform, Load (ETL) Command-Line Interface (CLI)** tool built natively for Linux environments. This system securely ingests real-time cryptocurrency metrics from external APIs, sanitizes data structures, injects operational business layers, and persists records using a robust ORM pattern.
+An enterprise-grade, decoupled **Extract, Transform, Load (ETL) Command-Line Interface (CLI)** tool built natively for Linux environments. This system securely ingests real-time cryptocurrency metrics from external APIs, sanitizes data structures, injects operational business layers, and persists records simultaneously across a relational database schema and formatted spreadsheet documents.
 
-This repository serves as a showcase of core engineering practices: **SOLID design patterns**, **automated Linux shell scripting**, **relational schema design**, **Unit Testing**, and **CI/CD pipeline automation**.
+This repository serves as a showcase of core engineering practices: **SOLID design patterns**, **automated Linux shell scripting**, **hybrid persistence layer design**, **Unit Testing**, and **CI/CD pipeline automation**.
 
 ---
 
@@ -15,9 +15,19 @@ Rather than a monolithic script, the core execution engine is split into single-
 
 ---
 
+## 📊 Hybrid Persistence Architecture
+
+The ETL engine processes financial metrics and pushes data seamlessly into a dual-target persistence layer designed for both high-integrity analytical tracing and immediate stakeholder reporting:
+
+1. **Relational Storage Layer (`.db`):** Local persistence driven by SQLite and SQLAlchemy ORM. Optimized for referential integrity, historical data accumulation, and relational schema enforcement.
+2. **Analysis & Spreadsheet Layer (`.xlsx`):** Automated spreadsheet workbook compilation via Pandas and OpenPyXL. Timestamps are explicitly stripped of timezone properties (`timezone-unaware`) to guarantee native compatibility across standard spreadsheet engines (Microsoft Excel, LibreOffice Calc, Google Sheets).
+
+---
+
 ## 🛠️ Tech Stack & Skills Highlighted
 
 *   **Language:** Python (OOP, Advanced Type Hinting, Data Classes)
+*   **Data Manipulation:** Pandas & OpenPyXL for matrix structuring, structural transformation, and cross-compatible Excel spreadsheet serialization.
 *   **Linux & Shell Scripting:** POSIX-compliant Bash scripting for environments orchestration, execution permissions (`chmod +x`), and automated CLI parameter routing (`argparse`).
 *   **Database & ORM:** SQLAlchemy ORM coupled with raw-equivalent data mapping, relational database transactional state safety (`session.rollback()`), and automated table creation.
 *   **Testing & CI/CD:** Enterprise regression verification via `pytest`. Continuous Integration powered by GitHub Actions executing workflows on native `ubuntu-latest` instances.
@@ -40,10 +50,10 @@ Rather than a monolithic script, the core execution engine is split into single-
 │   ├── pseudocode.md       # Pre-implementation architectural planning layout
 │   └── architecture_blueprint.md
 ├── scripts/
-│   └── setup.sh            # Automated shell installer (Enviroment instantiation & dependencies)
+│   └── setup.sh            # Automated shell installer (Environment instantiation & dependencies)
 ├── tests/                  # Automated component regression test suites
 ├── main.py                 # Core CLI entry point routing native Linux flags
-└── requirements.txt        # Pinned production dependency manifest
+└── requirements.txt        # Pinned production dependency manifest (Includes Pandas & OpenPyXL)
 ```
 
 ---
@@ -76,9 +86,10 @@ Run the data pipeline directly from the root of your workspace using native term
 source .venv/bin/activate
 python main.py
 ```
+*Upon successful execution, the system yields `dataforge.db` (historical storage) and updates `crypto_market_data.xlsx` (live report) in the root directory.*
 
 ### Debug Run (Verbose Logs)
-Displays real-time logs tracing extraction checkpoints, object structural sizes, and persistence lifecycle transactions:
+Displays real-time logs tracing extraction checkpoints, object structural sizes, timezone stripping routines, and persistence lifecycle transactions:
 ```bash
 python main.py --debug
 ```
@@ -103,4 +114,4 @@ Every single `push` or `pull_request` targeted at the `main` or `develop` branch
 2. Runs the POSIX `./scripts/setup.sh` to ensure cross-environment deployability.
 3. Triggers the complete `pytest` unit test array.
 
-This guarantees that master environments are persistently deployable and structurally sound.
+This guarantees that master environments are structurally sound and production-ready.
